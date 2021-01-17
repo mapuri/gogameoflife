@@ -18,10 +18,8 @@ var boardTmplt = `
 	table-layout: fixed;
 }
 .tableHeader {
-	background-color: tomato;
-	  color: black;
-	  padding: 10px;
-	  text-align: center;
+	color: black;
+	text-align: center;
 }
 .newCell {
 	background-color: darkseagreen;
@@ -46,23 +44,35 @@ var boardTmplt = `
 }
 </style>
 <table class=tableLayout>
-	<th vlass=tableHeader>
+	<tr> <td colSpan=5> <b>Rules:</b> </td></tr>
+	<tr> <td colSpan=5> Any live cell with less than two live neighbours dies. </td></tr>
+	<tr> <td colSpan=5> Any live cell with two or three live neighbours remains living. </td></tr>
+	<tr> <td colSpan=5> Any live cell with more than three live neighbours dies. </td></tr>
+	<tr> <td colSpan=5> Any dead cell with exactly three live neighbours becomes a live cell. </td></tr>
+	<tr> <td colSpan=5> A cell neighbours another cell if it is horizontally, vertically, or diagonally adjacent. </td></tr>
+</table>
+<p> </p>
+<table class=tableLayout>
+	<th class=tableHeader>
 		<td> <button id=resetButton onclick="resetGame()"> Reset </button> </td>
 		<td> <button id=startButton onclick="startGame()"> Start </button> </td>
 		<td> <button id=pauseButton onclick="pauseGame()" disabled> Pause </button> </td>
 		<td> <input type=text id=stepCountText width=10px> </td>
 		<td> <button id=forwardButton onclick="forwardGame()"> Forward </button> </td>
 	</th>
-	<tr>
-		<td id=errorStatus colSpan=5> </td>
-	</tr>
+	<tr> <td colSpan=5> <b>How to play?</b> </td> </tr>
+	<tr> <td colSpan=5> - Select a few cells and press 'Start' to step through different possible games states indefinitely. </td> </tr>
+	<tr> <td colSpan=5> - Or select a few cells, enter the number of steps for game to progress to and press 'Forward'. </td> </tr>
+	<tr> <td colSpan=5> - Press 'Pause' to pause the game in current state. </td> </tr>
+	<tr> <td colSpan=5> - Press 'Reset' to restart from clean state. </td> </tr>
+	<tr> <td id=errorStatus colSpan=5> </td> </tr>
 </table>
 <table class=tableLayout>
 		{{ $board := . }}
 		{{ range $row, $cellRow := .Cells }}
 		<tr>
 			{{ range $col, $dummy := $cellRow }}
-			<td id="cell{{$row}}-{{$col}}" {{ if $board.FirstDraw }} onclick="recordActiveCell({{$row}}, {{$col}})" class=newCell {{ else if ($board.IsActive $row $col) }} class=liveCell {{ else }} class=deadCell {{ end }}> {{ if ($board.IsActive $row $col) }} 🌹 {{ end }} </td>
+			<td id="cell{{$row}}-{{$col}}" {{ if $board.FirstDraw }} onclick="recordActiveCell({{$row}}, {{$col}})" class=newCell {{ else if ($board.IsActive $row $col) }} class=liveCell {{ else }} class=deadCell {{ end }}> {{ if ($board.IsActive $row $col) }} 🌻 {{ end }} </td>
 			{{ end }}
 		</tr>
 		{{ end }}
@@ -160,9 +170,6 @@ func (b *uxBoard) computeRowsColsAndXlate(minRows, minCols int) (rows, cols, row
 	rows = int(math.Max(float64(minRows), float64(maxRow-minRow+1)))
 	cols = int(math.Max(float64(minCols), float64(maxCol-minCol+1)))
 
-	minRow -= 2
-	minCol -= 2
-
 	// values to convert a point in UX board (0 based) to corresponding values on underlying board
 	rowXlate = minRow
 	colXlate = minCol
@@ -257,7 +264,7 @@ func forwardGame(this js.Value, args []js.Value) interface{} {
 	stepsStr := js.Global().Get("document").Call("getElementById", "stepCountText").Get("value").String()
 	steps, err := strconv.Atoi(stepsStr)
 	if err != nil {
-		js.Global().Get("document").Call("getElementById", "errorStatus").Set("innerHTML", err.Error())
+		js.Global().Get("document").Call("getElementById", "errorStatus").Set("innerHTML", fmt.Sprintf("<b color=red>%s</b>", err.Error()))
 		return nil
 	}
 	js.Global().Get("document").Call("getElementById", "errorStatus").Set("innerHTML", "")
