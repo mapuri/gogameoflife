@@ -95,6 +95,9 @@ type uxBoard struct {
 	// colXlate is the offset to add to UX coordinates to get the underlying game board's coordinates
 	colXlate int
 
+	// rows and cols in current ux board
+	rows, cols int
+
 	//
 	// Following fields are set within drawBoard and used to render the template
 	//
@@ -133,6 +136,8 @@ func (b *uxBoard) drawBoard() {
 	for i := range b.Cells {
 		b.Cells[i] = make([]struct{}, cols)
 	}
+	b.rows = rows
+	b.cols = cols
 	b.rowXlate = rowXlate
 	b.colXlate = colXlate
 
@@ -170,10 +175,16 @@ func (b *uxBoard) computeRowsColsAndXlate(minRows, minCols int) (rows, cols, row
 	rows = int(math.Max(float64(minRows), float64(maxRow-minRow+1)))
 	cols = int(math.Max(float64(minCols), float64(maxCol-minCol+1)))
 
-	// values to convert a point in UX board (0 based) to corresponding values on underlying board
-	rowXlate = minRow
-	colXlate = minCol
-
+	// compute values to convert a point in UX board (0 based) to corresponding values on underlying board.
+	// No need to reset these values, if the min and max values can be contained in the current board. This
+	// helps prevents sudden movement of the cells due to new origin being picked in some case.
+	if minRow >= 0 && maxRow <= b.rows && minCol >= 0 && maxCol <= b.cols {
+		rowXlate = 0
+		colXlate = 0
+	} else {
+		rowXlate = minRow
+		colXlate = minCol
+	}
 	return
 }
 
